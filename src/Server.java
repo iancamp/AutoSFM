@@ -12,6 +12,7 @@ import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -19,6 +20,7 @@ import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 
@@ -26,13 +28,38 @@ public class Server
 {
 
 	private static Socket socket;
+	private static String sha1 = "";
+	private final static String SFM_PATH = "C:\\Users\\iancamp\\Documents\\VisualSFM_windows_64bit\\";
 
-	public static void main(String[] args) 
+	public static void main(String[] args) throws IOException 
 	{
-		receive(); //download images from client
+				receive(); //download images from client
+		process(); 
+		System.out.println("Done!");
 	}
-	
-	
+
+	private static void process() throws IOException{
+		//windows only
+		try{
+			System.out.println(SFM_PATH + "VisualSFM.exe sfm " + System.getProperty("user.dir") + "\\" + sha1 + "\\in " + sha1 + "\\test.nvm");
+			
+			//		Runtime.getRuntime().exec("cmd.exe /c VisualSFM sfm " + sha1 + "\\src\\ " + sha1 + "\\out\\test.nvm");
+			Process proc = Runtime.getRuntime().exec(SFM_PATH + "VisualSFM.exe sfm " + System.getProperty("user.dir") + "\\" + sha1 + "\\in\\ " + sha1 + "\\out\\test.nvm");
+			//		Runtime.getRuntime().exec(SFM_PATH + "VisualSFM.exe"); 
+			BufferedReader in = new BufferedReader(  
+					new InputStreamReader(proc.getInputStream()));
+			String line = null;  
+			while ((line = in.readLine()) != null) {  
+				System.out.println(line);  
+			}  
+		} catch (IOException e) {  
+			e.printStackTrace();  
+
+		}
+		//		System.out.println(System.getProperty("user.dir"));
+	}
+
+
 	/*
 	 * Downloads images from client
 	 * Stores the images in a directory named the hash of all images (computed by the client)
@@ -48,66 +75,85 @@ public class Server
 			//Server is running always. This is done using this while(true) loop
 			int i = 0;
 			File output;
-			
+
 			BufferedImage img;
-			
-			
+			ArrayList<BufferedImage> images = new ArrayList<BufferedImage>();
+
+
 			//get hash
-			
+
 			socket = serverSocket.accept();	
 
 			InputStream is = socket.getInputStream();
 
 			InputStreamReader isr = new InputStreamReader(is);
 
-//			DataInputStream din = new DataInputStream(socket.getInputStream());
-//			DataOutputStream dout = new DataOutputStream(socket.getOutputStream());
+			//			DataInputStream din = new DataInputStream(socket.getInputStream());
+			//			DataOutputStream dout = new DataOutputStream(socket.getOutputStream());
 			BufferedReader br = new BufferedReader(isr);
 
-			
 
 
-			String sha1 = Client.sha1sum(br.readLine());
+
+			sha1 = Client.sha1sum(br.readLine());
 			System.out.println("hash: " + sha1);
 			//dout.writeUTF("Server received hash");
-//			System.out.println(din.readUTF());
+			//			System.out.println(din.readUTF());
 
 			while(true) 
 			{
-				
+
 				try{
-					
+
 					//Reading the message from the client
-System.out.println("test1");
-				
+
+
 					socket = serverSocket.accept();
-					System.out.println("test2");
+
 
 					is = socket.getInputStream();
-					System.out.println("test3");
 
-//
+					//
 					//System.out.println(br.readLine());
-//					System.out.println(din.readUTF());
-					
+					//					System.out.println(din.readUTF());
+
+					//					img = ImageIO.read(ImageIO.createImageInputStream(socket.getInputStream()));
+					//					System.out.println("Image received!!!!");
+					//					output = new File(sha1 + "/in/" + "img" + i + ".jpg");
+					//					output.mkdirs();
+					//					System.out.println(img);
+					//					if(System.getProperty("os.name").equalsIgnoreCase("win"))
+					//						Thread.sleep(1000);
+					//					if(img == null)
+					//						break;
+					//					ImageIO.write(img, "jpg", output);
+					//					System.out.println("Image written to file!");
+					//					i++;
+
 					img = ImageIO.read(ImageIO.createImageInputStream(socket.getInputStream()));
 					System.out.println("Image received!!!!");
-					output = new File(sha1 + "/" + "img" + i + ".jpg");
-					output.mkdirs();
-					System.out.println(img);
-					if(System.getProperty("os.name").equalsIgnoreCase("win"))
-						Thread.sleep(50);
+
+
 					if(img == null)
-						continue;
-					ImageIO.write(img, "jpg", output);
-					System.out.println("Image written to file!");
-					i++;
+						break;
+					images.add(img);
+
+
+
 				}
 				catch(SocketTimeoutException st)
 				{
 					System.out.println("Socket timed out!");
 					break;
 				}
+			}
+			for(BufferedImage image : images)
+			{
+				output = new File(sha1 + "/in/" + "img" + i + ".jpg");
+				output.mkdirs();
+				ImageIO.write(image, "jpg", output);
+				System.out.println("Image written to file!");
+				i++;
 			}
 		}
 		catch (Exception e) 
