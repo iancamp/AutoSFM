@@ -32,20 +32,20 @@ public class Server
 	private final static String SFM_PATH = "C:\\Users\\iancamp\\Documents\\VisualSFM_windows_64bit\\";
 
 	public static void main(String[] args) throws IOException 
-	{
+	{	
 				receive(); //download images from client
-		process(); 
+		process(" sfm " + System.getProperty("user.dir") + "\\" + sha1 + "\\in\\ " + sha1 + "\\sparse.nvm"); 
+		process(" sfm+loadnvm+pmvs " + System.getProperty("user.dir") + "\\" + sha1 + "\\sparse.nvm " + sha1 + "\\dense.nvm"); 
+
 		System.out.println("Done!");
 	}
 
-	private static void process() throws IOException{
+	private static void process(String args) throws IOException{
 		//windows only
 		try{
-			System.out.println(SFM_PATH + "VisualSFM.exe sfm " + System.getProperty("user.dir") + "\\" + sha1 + "\\in " + sha1 + "\\test.nvm");
+			System.out.println(SFM_PATH + "VisualSFM.exe " + args);
 			
-			//		Runtime.getRuntime().exec("cmd.exe /c VisualSFM sfm " + sha1 + "\\src\\ " + sha1 + "\\out\\test.nvm");
-			Process proc = Runtime.getRuntime().exec(SFM_PATH + "VisualSFM.exe sfm " + System.getProperty("user.dir") + "\\" + sha1 + "\\in\\ " + sha1 + "\\out\\test.nvm");
-			//		Runtime.getRuntime().exec(SFM_PATH + "VisualSFM.exe"); 
+			Process proc = Runtime.getRuntime().exec(SFM_PATH + "VisualSFM.exe" + args);
 			BufferedReader in = new BufferedReader(  
 					new InputStreamReader(proc.getInputStream()));
 			String line = null;  
